@@ -1,0 +1,223 @@
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import javax.swing.JPanel;
+public class DisplayPanel extends JPanel implements ActionListener
+{
+	private static final long serialVersionUID = 1L;
+	private int DisplayWidth = 557;
+	private int DisplayHeight = 580;
+	private int ButtonsWidth = 200;
+	private final Color LB = new Color(0x00,0xFF,0xFF);
+	private final Color DB = new Color(0xCD,0x5C,0x5C);
+	private final Color P = new Color(0x80,0, 0x80);
+	
+	public void mousePressed(MouseEvent e)
+	{
+		selectNumber(e.getX(),e.getY());
+	}
+
+	public DisplayPanel()
+	{
+		addMouseListener(new MouseAdapter()
+		{
+			public void mousePressed(MouseEvent e)
+			{
+				selectNumber(e.getX(),e.getY());
+			}
+		});
+		this.setLayout(new BorderLayout());
+		JPanel pb = new JPanel();
+		pb.setPreferredSize(new Dimension(ButtonsWidth,DisplayHeight));
+		pb.setBackground(LB);
+		FlowLayout FL = new FlowLayout();
+		FL.setVgap(55);
+		FL.setHgap(100); //set the flow layout to give symmetric display
+		pb.setLayout(FL);
+		SButton EYS = new SButton("Enter Sudoku", "EYS");
+		EYS.addActionListener(this);
+		pb.add(EYS);
+		SButton SES = new SButton("Easy Level", "SES");
+		SES.addActionListener(this);
+		pb.add(SES);
+		SButton SHS = new SButton("Hard Level", "SHS");
+		SHS.addActionListener(this);
+		pb.add(SHS);
+		SButton GBS = new SButton("GOBack One Step", "GBS");
+		GBS.addActionListener(this);
+		pb.add(GBS);
+		SButton STS = new SButton("Solution", "STS");
+		STS.addActionListener(this);
+		pb.add(STS);
+		this.add(pb,BorderLayout.WEST);
+	}
+	private void selectNumber(int x, int y)
+	{
+		int NumberPosition[] = {3,63,124,187,248,309,372,433,494};	//number position
+		final byte pSNumberY = 19; //the spacing for the numbers
+		if( x < ButtonsWidth + NumberPosition[0])
+		{
+			return;
+		}
+		x -= ButtonsWidth - NumberPosition[0];
+		byte count;
+		byte Xposition = 0; //the position of the selected box 0 - 8 in X
+		for(count = 0; count < 9; count++) //check to find position
+		{
+			if(x > NumberPosition[count])
+			{
+				Xposition = count;
+			}
+		}
+		byte Yposition = 0;
+		for(count = 0; count < 9; count++) //check to find position
+		{
+			if(y > NumberPosition[count])
+			{
+				Yposition = count;
+			}
+		}
+		byte position = (byte) (Xposition + Yposition*9);
+		byte Xnumber = 0;
+		x -= NumberPosition[Xposition];
+		for(count = 0; count < 3; count++)
+		{
+			if(x > pSNumberY*count)
+			{
+				Xnumber = count;
+			}
+			byte Ynumber = 0;
+			y -= NumberPosition[Yposition];
+			for(count = 0; count < 3; count++)
+			{
+				if(y > pSNumberY*count)
+				{
+					Ynumber = count;
+				}
+			}
+			byte number = (byte) (Xnumber + Ynumber*3);
+			MySudoku.step = Smethods.select(MySudoku.sudoku, number,position, MySudoku.step);
+			repaint(ButtonsWidth,0, DisplayWidth,DisplayHeight);
+		}
+	}
+	public Dimension getPreferredSize() //set the preferred size of display panel
+	{
+		return new Dimension(DisplayWidth +ButtonsWidth,DisplayHeight);
+	}
+	protected void paintComponent(Graphics g)
+	{
+		final byte Foot = 24; //the height of the foot for sudoku
+		final byte NumberX = 11;
+		final byte NumberY = 54;
+		final byte blanksize = 59;
+		final byte pNumberX = 4;
+		final byte pNumberY = 18;
+		final byte pSNumberX = 20;
+		final byte pSNumberY = 19;
+		final int FootMessageX = 96;
+		final int FootMessageY = 574;
+		final int FootNumberX = 211;
+		final int FootNumberY = 574;
+		int BigLines[] = {0, 184, 369, 554, 577};
+		int SmallLines[] = {62, 123, 247, 308, 432, 493};
+		int NumberPosition[] = {3,63,124,187,248,309,372,433,494};
+		Font fontSelected = new Font("SansSerif", Font.ROMAN_BASELINE, 70);
+		Font fontFoot = new Font("SansSerif", Font.ROMAN_BASELINE, 20);
+		Font fontPencil = new Font("SansSerif", Font.ROMAN_BASELINE,20);
+		super.paintComponent(g);
+		g.setColor(DB);
+		g.setFont(fontPencil);
+		byte count;
+		for(count = 0; count < 5; count++)
+		{
+			g.fillRect(0, BigLines[count], DisplayWidth + ButtonsWidth, 3);
+		}
+		for(count = 0; count < 6; count++)
+		{
+			g.drawLine(0, SmallLines[count], DisplayWidth + ButtonsWidth,SmallLines[count]);
+		}
+		g.fillRect(BigLines[0] + ButtonsWidth , 0, 3, DisplayHeight);
+		g.fillRect(BigLines[1] + ButtonsWidth , 0, 3, DisplayHeight - Foot);
+		g.fillRect(BigLines[2] + ButtonsWidth , 0, 3, DisplayHeight - Foot);
+		g.fillRect(BigLines[3] + ButtonsWidth , 0, 3, DisplayHeight);
+		for(count = 0; count < 6; count++)
+		{
+			g.drawLine(SmallLines[count] + ButtonsWidth, 0, SmallLines[count] + ButtonsWidth, DisplayHeight -Foot); //foot text
+		}
+		g.setFont(fontFoot);
+		g.drawString("This is Step      in the Sudoku Solution", FootMessageX + ButtonsWidth, FootMessageY);
+		g.drawString(String.valueOf(MySudoku.step), FootNumberX + ButtonsWidth, FootNumberY);
+		byte numbercount;
+		for(numbercount = 0; numbercount < 81; numbercount++)
+		{
+			g.setColor(DB);
+			byte zeros = 0;
+			byte outercount;
+			for(outercount = 0; outercount < 3; outercount++)
+			{
+				for(count = 0; count < 3; count++)
+				{
+					byte pencilnumber = MySudoku.sudoku[count + outercount*3 + numbercount*9][ MySudoku.step];
+					if(pencilnumber > 0)
+					{
+						if(pencilnumber < 10)
+						{
+								g.setFont(fontPencil);
+								g.drawString(String.valueOf(pencilnumber ), NumberPosition[numbercount%9] + (count*pSNumberX) + pNumberX + ButtonsWidth, NumberPosition[numbercount/9] + outercount*pSNumberY + pNumberY);
+						}
+						else
+						{
+							g.setFont(fontSelected);
+							g.drawString(String.valueOf(pencilnumber - 10), NumberPosition[numbercount%9] + ButtonsWidth + NumberX, NumberPosition[numbercount/9] + NumberY);
+						}
+					}
+					else
+					{
+						zeros += 1;
+					}
+				}
+			}
+			if(zeros == 9)
+			{
+				g.setColor(P);
+				g.fillRect(NumberPosition[numbercount%9] + ButtonsWidth,
+				NumberPosition[numbercount/9], blanksize, blanksize);
+			}
+		}
+	}
+	public void actionPerformed(ActionEvent e)
+	{
+		if(e.getActionCommand() == "EYS")
+		{
+			MySudoku.step = 0; //nothing is selected
+		}		
+		else if(e.getActionCommand() == "STS")
+		{
+			Smethods.trysudoku(MySudoku.sudoku,MySudoku.step);
+		}
+		else if(e.getActionCommand() == "GBS")
+		{
+			if(MySudoku.step > 0)
+			MySudoku.step -= 1;
+		}
+		else if(e.getActionCommand() == "SES")
+		{
+			Smethods.trysudoku(MySudoku.sudoku, (byte) 0);
+			MySudoku.step = 30;
+		}
+		else if(e.getActionCommand() == "SHS")
+		{
+			Smethods.trysudoku(MySudoku.sudoku, (byte) 0);
+			MySudoku.step = 10;
+		}
+		repaint(ButtonsWidth,0, DisplayWidth,DisplayHeight);
+	}
+	
+}
